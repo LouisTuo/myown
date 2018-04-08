@@ -1,1 +1,12 @@
 1. trigger 触发 trigger 触发被选元素的指定事件类型
+
+2. Struts2 无法调用action类中的静态方法
+ 有一个名为struts.ognl.allowStaticMethodAccess的配置项,
+         #Whether to allow static method access in OGNL expressions or not
+        struts.ognl.allowStaticMethodAccess=false
+		于是把false改成true,配置到struts.properties中
+        struts.ognl.allowStaticMethodAccess=true
+        问题解决
+ 
+        也可以配置在struts.xml中
+        <constant name="struts.ognl.allowStaticMethodAccess" value="true" />
