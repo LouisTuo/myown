@@ -11,4 +11,4 @@
         也可以配置在struts.xml中
         <constant name="struts.ognl.allowStaticMethodAccess" value="true" />
 	
-	3. 9383da7e865cd5d54ca6e76324b91af22f1836d1
+	3. 9383da7e865cd5d54ca6e76324b91af22f1836d
