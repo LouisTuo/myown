@@ -1,0 +1,122 @@
+logo
+stackoverrun
+ CN
+Apache POI-HSSF在将图片添加到Excel单元格时扭曲图像大小
+7
+6,642
+我正在使用Apache POI-HSSF将图片添加到单元格中。图像是120x100，但无论我做什么以及如何调整它大小，Excel电子表格总是显示它横跨多行，并将其扭曲到比宽度大得多的高度。
+
+如何保持原始尺寸？
+
+我的代码：
+
+InputStream is = new FileInputStream(getImageURL()); 
+byte[] bytes = IOUtils.toByteArray(is); 
+int pictureIdx = wb.addPicture(bytes, Workbook.PICTURE_TYPE_JPEG); 
+is.close(); 
+
+//add a picture shape 
+CreationHelper helper = wb.getCreationHelper(); 
+ClientAnchor anchor = helper.createClientAnchor(); 
+// Create the drawing patriarch. This is the top level container for all shapes. 
+Drawing drawing = sheet1.createDrawingPatriarch(); 
+//set top-left corner of the picture, 
+//subsequent call of Picture#resize() will operate relative to it 
+
+anchor.setAnchorType(0); 
+anchor.setCol1(1); 
+anchor.setRow1(1); 
+
+Picture pict = drawing.createPicture(anchor, pictureIdx); 
+
+//auto-size picture relative to its top-left corner 
+pict.resize(); 
+我已经尝试了所有的DX/DY坐标和彩色/行。位置并不重要，它横向拉伸图像的问题。由于
+
+java image excel apache-poi hssf
+来源分享
+
+创建 24 4月. 13 gene b.
+
+0
+我发现这种情况发生在我使用row.setHeight（）设置行高时。如果我不这样做，图像是好的。无论我身高多大，图像仍然垂直拉伸。 – gene b. 24 4月. 13
+
+3 答案
+排序：
+
+有效
+最旧
+投票
+3
+据我从Apache的POI的文件的理解，这是因为pict.resize(); ，因为它说here，如果工作簿的默认字体大小改变时，画面可能会垂直或水平拉伸。
+
+来源分享
+
+创建 07 8月 13 hasanovh
+
+3
+我一直在面对类似的问题，我添加的图像变得扭曲。我尝试过pict.resize（）和sheet.autoSizeColumn（），但它不起作用。最后，我发现下面的网址： - https://svn.apache.org/repos/asf/poi/trunk/src/examples/src/org/apache/poi/ss/examples/AddDimensionedImage.java
+
+我加了上面的类为我的代码，并使用它的方法，将图像添加到Excel中。我能够添加图像几乎没有失真。希望这对你也有帮助。我写以下代码： -
+
+BufferedImage imageIO = ImageIO.read(new URL(image)); 
+int height= imageIO.getHeight(); 
+int width=imageIO.getWidth(); 
+int relativeHeight=(int)(((double)height/width)*28.5); 
+new AddDimensionedImage().addImageToSheet(2, sheet.getPhysicalNumberOfRows()-1 , sheet, sheet.createDrawingPatriarch(),new URL(image), 30, relativeHeight, AddDimensionedImage.EXPAND_ROW); 
+来源分享
+
+创建 20 1月 16 Abhi
+
+0
+我创建与来自sheet.getColumnWidthInPixels采取的宽度另一空图像，吸取必要的图像在其上，并用于AddDimensionedImage.EXPAND_ROW_AND_COLUMN将其精确地装配到细胞：
+
+HSSFRow imageRow = sheet.createRow(row); 
+
+    BufferedImage image = ImageIO.read(Paths.get(pathToImage).toUri().toURL()); 
+
+    AddDimensionedImage addImage = new AddDimensionedImage(); 
+    float columnWidth = sheet.getColumnWidthInPixels(0); 
+
+    BufferedImage off_Image = new BufferedImage((int) columnWidth, actualImageHeight, BufferedImage.TYPE_INT_RGB); 
+    Graphics2D g2 = off_Image.createGraphics(); 
+    g2.setColor(new Color(192,192,192)); 
+    g2.fillRect(0, 0, off_Image.getWidth(), off_Image.getHeight()); 
+    g2.drawImage(image, 0, 0, null); 
+    g2.dispose(); 
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
+    ImageIO.write(off_Image, "jpg", baos); 
+    byte[] bytes = baos.toByteArray(); 
+
+    double reqImageWidthMM = ((double) off_Image.getWidth())/ConvertImageUnits.PIXELS_PER_MILLIMETRES; 
+    double reqImageHeightMM = ((double) off_Image.getHeight())/ConvertImageUnits.PIXELS_PER_MILLIMETRES; 
+
+    addImage.addImageToSheet("A1", sheet, bytes, reqImageWidthMM, reqImageHeightMM, AddDimensionedImage.EXPAND_ROW_AND_COLUMN); 
+我必须将AddDimensionedImage.java复制到我的类路径并重载addImageToSheet以接受字节数组。
+
+在此之前，我尝试了这里提到的其他选项，但它没有帮助。希望我的回答对某人有用。
+
+来源分享
+
+创建 01 2月 18 Vitaly Sazanovich
+
+
+相关问题
+
+使用POI HSSF读取excel单元格中的日期值API
+Apache POI，同时使用XSSF和HSSF
+使用POI在Excel中拉伸的图像
+Java。 HSSF。 Apache的POI。如何修改代码
+使用Apache POI在Excel中合并单元格
+没有定位点的Apache POI插入图像
+使用像Excel4node这样的作家，我如何在Excel中使图像可删除，但仍然定位到一个单元格？
+HSSF Apache的单元格样式 - 所有细胞都是灰色
+热门问题
+
+上 
+问题
+反馈
+2018 stackoverrun.com
+
+Licensed under cc by-sa 3.0 with attribution required.
